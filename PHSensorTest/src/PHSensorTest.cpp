@@ -18,7 +18,6 @@ float neutralVoltage = 1580;
 float voltage, slope, intercept, ph = 25;
 const int OLED_RESET = -1;
 Adafruit_SSD1306 display(OLED_RESET);
-
 // Let Device OS manage the connection to the Particle Cloud
 SYSTEM_MODE(SEMI_AUTOMATIC);
 

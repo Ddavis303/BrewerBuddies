@@ -29,13 +29,13 @@ SYSTEM_THREAD(ENABLED);
 // Show system, cloud connectivity, and application logs over USB
 // View logs with CLI using 'particle serial monitor --follow'
 SerialLogHandler logHandler(LOG_LEVEL_INFO);
-HX711 myScale(A5, SCK);
+HX711 myScale(D14, D13);
 
 //Adafruit_MQTT_Publish pubFeed = Adafruit_MQTT_Publish(&mqtt, AIO_USERNAME "/feeds/Weight");
 // void MQTT_connect();
 // bool MQTT_ping();
 
-const float CALFACTOR=5.45;
+const float CALFACTOR=6.25;//5.45;
 const int SAMPLES=10;
 
 float weight, rawData, calibration;
@@ -51,6 +51,7 @@ void setup() {
  
   myScale.tare();//set the tare weight
   myScale.set_scale(CALFACTOR);//adjust when calibrating scale to desired units
+  delay(2000);
 }
 
 // loop() runs over and over again, as quickly as it can execute.
@@ -61,9 +62,9 @@ void loop() {
   Serial.printf("Weight: %f\n", weight);
   delay(2000);
   
-  rawData = myScale.get_value(SAMPLES);
-  offset = myScale.get_offset();
-  calibration = myScale.get_scale();
+  // rawData = myScale.get_value(SAMPLES);
+  // offset = myScale.get_offset();
+  // calibration = myScale.get_scale();
 
   // if((millis()-lastTime > 6000)) {
   //   if(mqtt.Update()) {

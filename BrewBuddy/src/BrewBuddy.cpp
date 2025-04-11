@@ -84,7 +84,8 @@ void setup()
   Serial.begin(9600);
   delay(3000);
   WiFi.clearCredentials();
-  WiFi.setCredentials("CODA-1B30", "2512070C3758");
+  //WiFi.setCredentials("CODA-1B30", "2512070C3758");
+  WiFi.setCredentials("DDCIOT", "ddcIOT2020");
   WiFi.on();
   WiFi.connect();
   while(WiFi.connecting()) {
@@ -117,12 +118,12 @@ void setup()
 
   delay(1000);
 
-   //ToF Setup
-   Serial.println("Adafruit VL53L0X test");
-   if (!lox.begin()) {
-     Serial.println(F("Failed to boot VL53L0X"));
-     while(1);
-   }
+  //ToF Setup
+  Serial.println("Adafruit VL53L0X test");
+  if (!lox.begin()) {
+    Serial.println(F("Failed to boot VL53L0X"));
+    while(1);
+  }
 }
 
 void loop()

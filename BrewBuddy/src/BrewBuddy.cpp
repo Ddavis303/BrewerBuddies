@@ -47,7 +47,7 @@ float voltage, slope, intercept, ph = 25;
 
 const float CALFACTOR=5.45;
 const int SAMPLES=10;
-float weight, rawData, calibration;
+float weight, rawData, calibration, liquidWeight;
 int offset;
 
 const float H20DENSITY = 1;//g/cm^3
@@ -147,6 +147,8 @@ void loop()
   //Scale
   weight = myScale.get_units(SAMPLES);
   Serial.printf("Weight: %f\n", weight);
+  // liquidWeight = weight - 643;
+  // Serial.printf("Liquid Weight: %f\n", liquidWeight);
   delay(2000);
   
   rawData = myScale.get_value(SAMPLES);

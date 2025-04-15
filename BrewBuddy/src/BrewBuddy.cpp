@@ -30,6 +30,7 @@ const int MAXRETRY = 4;
 const uint32_t msSAMPLE_INTERVAL = 2500;
 const uint32_t msMETRIC_PUBLISH = 10000;
 uint32_t lastTime = 0;
+uint32_t lastHour = 0;
 
 const int16_t dsVCC = D3;
 const int16_t dsData = D2;
@@ -54,10 +55,20 @@ int offset;
 
 const float H20DENSITY = 1;//g/cm^3
 const float RADIUS = 10.5;//cm
-float volume, height, density, specificGravity;
+float gallons, volume, height, density, specificGravity;
 
 const int TFT_DC = D5;
 const int TFT_CS = D4;
+
+// int col[8] = {tft.color565(155, 0, 50),
+//               tft.color565(170, 30, 80),
+//               tft.color565(195, 60, 110),
+//               tft.color565(215, 90, 140),
+//               tft.color565(230, 120, 170),
+//               tft.color565(250, 150, 200),
+//               tft.color565(255, 180, 220),
+//               tft.color565(255, 210, 240)
+//             };
 
 
 //const float PI = 3.14159265358979323846;
@@ -67,6 +78,7 @@ bool MQTT_ping();
 void getTemp();
 void publishData();
 float getPH();
+//void showmsgXY(int x, int y, int sz, const char *msg);
 
 // Objects
 DS18B20 ds18b20(dsData, true);
@@ -80,6 +92,7 @@ Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
 Adafruit_MQTT_Publish tempPub = Adafruit_MQTT_Publish(&mqtt, AIO_USERNAME "/feeds/temp");
 Adafruit_MQTT_Publish phPub = Adafruit_MQTT_Publish(&mqtt, AIO_USERNAME "/feeds/ph");
 Adafruit_MQTT_Publish specificGPub = Adafruit_MQTT_Publish(&mqtt, AIO_USERNAME "/feeds/specificg");
+Adafruit_MQTT_Publish gallonPub = Adafruit_MQTT_Publish(&mqtt, AIO_USERNAME "/feeds/barrels");
 
 SYSTEM_MODE(AUTOMATIC);
 
@@ -100,22 +113,20 @@ void setup()
   }
   Serial.printf("\n\n");
   
+  //Screen Setup
   tft.begin();
   tft.fillScreen(ILI9341_BLACK);
   tft.setRotation(1);
+  //Show Logo
   tft.drawBitmap(0, 0, logo, 320, 240, ILI9341_GREEN);
-  //delay(5000);
-  //pinMode(dsGND, OUTPUT);
-  //digitalWrite(dsGND, LOW);
+  delay(3000);
+  tft.fillScreen(ILI9341_BLACK);
+
+
   pinMode(dsVCC, OUTPUT);
   digitalWrite(dsVCC, HIGH);
   pinMode(PHPIN, INPUT);
   
-  // display.begin(SSD1306_SWITCHCAPVCC, 0x3C);
-  // display.display();
-  // display.clearDisplay();
-  // display.display();
-
   // Add initialization check
   Serial.println("Initializing sensor...");
 
@@ -130,10 +141,10 @@ void setup()
 
   //ToF Setup
   Serial.println("Adafruit VL53L0X test");
-  // if (!lox.begin()) {
-  //   Serial.println(F("Failed to boot VL53L0X"));
-  //   while(1);
-  // }
+  if (!lox.begin()) {
+    Serial.println(F("Failed to boot VL53L0X"));
+    while(1);
+  }
 }
 
 void loop()
@@ -145,17 +156,18 @@ void loop()
   //ToF
   VL53L0X_RangingMeasurementData_t measure;
     
-  Serial.print("Reading a measurement... ");
+  Serial.print("\nReading a measurement... ");
   lox.rangingTest(&measure, false); // pass in 'true' to get debug data printout!
 
   if (measure.RangeStatus != 4) {  // phase failures have incorrect data
-    Serial.print("Distance (mm): "); Serial.println(measure.RangeMilliMeter);
+    Serial.print("\nDistance (mm): "); Serial.println(measure.RangeMilliMeter);
   } else {
     Serial.println(" out of range ");
   }
 
   //Scale
   weight = myScale.get_units(SAMPLES);
+  gallons = 3785.0 / weight;
   Serial.printf("Weight: %f\n", weight);
   // liquidWeight = weight - 643;
   // Serial.printf("Liquid Weight: %f\n", liquidWeight);
@@ -181,17 +193,13 @@ void loop()
     getTemp();
   }
 
-  if (millis() - msLastMetric >= msMETRIC_PUBLISH)
-  {
-    Serial.println("Publishing now.");
-    publishData();
-  }
 
   //Check pH
-  //if (millis() - msLastSample >= msSAMPLE_INTERVAL)
-  //{
-    pH = getPH();
-  //}
+  
+  pH = getPH();
+
+
+  //Print to tft
   tft.fillScreen(ILI9341_BLACK);
   tft.setCursor(0, 0);
   tft.setTextColor(ILI9341_GREEN);
@@ -203,18 +211,25 @@ void loop()
   tft.printf("SG: %0.5f\n", specificGravity);
   tft.printf("Weight: %0.2f\n", weight);
   tft.printf("Distance: %0.2f\n", measure.RangeMilliMeter/10);
+  tft.printf("Gallons: %0.2f\n", gallons);
 
-  //publish every 6 seconds
-  if((millis()-lastTime > 6000)) {
+  //publish to Adafruit every minute
+  if((millis()-lastTime > 60000)) {
     if(mqtt.Update()) {
         tempPub.publish(fahrenheit);
         Serial.printf("Publishing %0.2f \n",fahrenheit);
-        phPub.publish(pH);
-        Serial.printf("Publishing %0.2f \n",pH);
-        specificGPub.publish(specificGravity);
-        Serial.printf("Publishing %0.2f \n",specificGravity); 
       } 
     lastTime = millis();
+  }
+
+  //Publish to Adafruit every hour
+  if((millis()-lastHour) > 3600000){
+    phPub.publish(pH);
+    Serial.printf("Publishing %0.2f \n",pH);
+    specificGPub.publish(specificGravity);
+    Serial.printf("Publishing %0.2f \n",specificGravity); 
+    gallonPub.publish(gallons);
+    Serial.printf("Publishing %0.2f \n",gallons);
   }
 }
 
@@ -333,3 +348,16 @@ float getPH(){
   // display.display();
   return ph;
 }
+
+// void showmsgXY(int x, int y, int sz, const char *msg)
+// {
+//   int16_t x1, y1;
+//   uint16_t wid, ht;
+
+
+//   tft.setFont(SansSerifBold9pt7b);
+//   tft.setCursor(x, y);
+//   tft.setTextColor(0x0000);
+//   tft.setTextSize(sz);
+//   tft.print(msg);
+// }

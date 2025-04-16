@@ -82,10 +82,7 @@ float getPH();
 
 // Objects
 DS18B20 ds18b20(dsData, true);
-//TCPClient theClient;
-// Adafruit_MQTT_SPARK mqtt(&theClient, AIO_SERVER, AIO_SERVERPORT, AIO_USERNAME, AIO_KEY);
-//Adafruit_SSD1306 display(OLED_RESET);
-HX711 myScale(A5, SCK);
+HX711 myScale(D15, D14);
 Adafruit_VL53L0X lox = Adafruit_VL53L0X();
 Adafruit_ILI9341 tft = Adafruit_ILI9341(TFT_CS, TFT_DC);
 //Publish's
@@ -102,7 +99,7 @@ SYSTEM_THREAD(ENABLED);
 void setup()
 {
   Serial.begin(9600);
-  delay(3000);
+  //delay(3000);
   WiFi.clearCredentials();
   WiFi.setCredentials("CODA-1B30", "2512070C3758");
   //WiFi.setCredentials("DDCIOT", "ddcIOT2020");
@@ -113,8 +110,15 @@ void setup()
   }
   Serial.printf("\n\n");
   
+  //ToF Setup
+  Serial.println("Adafruit VL53L0X test");
+  if (!lox.begin()) {
+    Serial.println(F("Failed to boot VL53L0X"));
+    while(1);
+  }
+
   //Screen Setup
-  tft.begin();
+   tft.begin();
   tft.fillScreen(ILI9341_BLACK);
   tft.setRotation(1);
   //Show Logo
@@ -136,15 +140,9 @@ void setup()
  
   myScale.tare();//set the tare weight
   myScale.set_scale(CALFACTOR);//adjust when calibrating scale to desired units
-
   delay(1000);
 
-  //ToF Setup
-  Serial.println("Adafruit VL53L0X test");
-  if (!lox.begin()) {
-    Serial.println(F("Failed to boot VL53L0X"));
-    while(1);
-  }
+  
 }
 
 void loop()
@@ -173,9 +171,9 @@ void loop()
   // Serial.printf("Liquid Weight: %f\n", liquidWeight);
   delay(2000);
   
-  rawData = myScale.get_value(SAMPLES);
-  offset = myScale.get_offset();
-  calibration = myScale.get_scale();
+  // rawData = myScale.get_value(SAMPLES);
+  // offset = myScale.get_offset();
+  // calibration = myScale.get_scale();
 
   //Specific Gravity
   height = 24 - (measure.RangeMilliMeter/10);
@@ -194,9 +192,9 @@ void loop()
   }
 
 
-  //Check pH
+  // //Check pH
   
-  pH = getPH();
+   pH = getPH();
 
 
   //Print to tft
@@ -210,7 +208,7 @@ void loop()
   tft.printf("pH: %0.2f\n", pH);
   tft.printf("SG: %0.5f\n", specificGravity);
   tft.printf("Weight: %0.2f\n", weight);
-  tft.printf("Distance: %0.2f\n", measure.RangeMilliMeter/10);
+  tft.printf("Distance: %0.2f\n", height);
   tft.printf("Gallons: %0.2f\n", gallons);
 
   //publish to Adafruit every minute

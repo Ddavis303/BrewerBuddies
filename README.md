@@ -1,7 +1,7 @@
 # Brew Buddy – IoT Brewing Analytics System
 ## Overview
-The Brew Buddy is an IoT-based system designed to help brewers—especially small craft and home brewers—monitor essential brewing parameters in real time. Using a combination of sensors and an Argon microcontroller, the system collects temperature, pH, specific gravity (via weight), and volume (via distance), displays the data on a web dashboard, and sends text alerts when any readings fall outside predefined thresholds.
-This project was developed as a capstone for an IoT Rapid Prototyping course and serves as a working proof-of-concept for a scalable tech solution in the brewing industry.
+The **Brew Buddy** is an IoT-based system designed to help brewers—especially small craft and home brewers—monitor essential brewing parameters in real time. Using a combination of sensors and an Argon microcontroller, the system collects **temperature**, **pH**, **specific gravity (via weight)**, and **volume (via distance)**, displays the data on a web dashboard, and sends **text alerts** and **email alerts** when any readings fall outside predefined thresholds.
+This project was developed as a **capstone for an IoT Rapid Prototyping course** and serves as a working proof-of-concept for a scalable tech solution in the brewing industry.
 ---
 ## Features
 - Live data readings from brewing vessels
